@@ -1,3 +1,4 @@
+/* eslint-disable mocha/no-mocha-arrows */
 /* eslint-disable no-console,no-unused-expressions,@typescript-eslint/no-unused-expressions */
 
 import * as delay from 'delay';
@@ -25,7 +26,7 @@ const clearJobs = async (): Promise<void> => {
 // Slow timeouts for Travis
 const jobTimeout = 500;
 const jobType = 'do work';
-const jobProcessor = () => {};
+const jobProcessor = () => { };
 
 describe('Agenda', () => {
 	beforeEach(async () => {
@@ -165,7 +166,7 @@ describe('Agenda', () => {
 			});
 			it('is inherited by jobs', () => {
 				globalAgenda.defaultLockLifetime(7777);
-				globalAgenda.define('testDefaultLockLifetime', () => {});
+				globalAgenda.define('testDefaultLockLifetime', () => { });
 				expect(globalAgenda.definitions.testDefaultLockLifetime.lockLifetime).to.equal(7777);
 			});
 		});
@@ -342,13 +343,8 @@ describe('Agenda', () => {
 						.find({
 							name: 'unique job'
 						})
-						.toArray((err, jobs) => {
-							if (err) {
-								throw err;
-							}
-
-							expect(jobs).to.have.length(1);
-						});
+						.toArray()
+						.then((jobs) => { expect(jobs).to.have.length(1); });
 				});
 
 				it('should not modify job when unique matches and insertOnly is set to true', async () => {
@@ -395,13 +391,8 @@ describe('Agenda', () => {
 						.find({
 							name: 'unique job'
 						})
-						.toArray((err, jobs) => {
-							if (err) {
-								throw err;
-							}
-
-							expect(jobs).to.have.length(1);
-						});
+						.toArray()
+						.then((jobs) => { expect(jobs).to.have.length(1); });
 				});
 			});
 
@@ -443,13 +434,8 @@ describe('Agenda', () => {
 						.find({
 							name: 'unique job'
 						})
-						.toArray((err, jobs) => {
-							if (err) {
-								throw err;
-							}
-
-							expect(jobs).to.have.length(2);
-						});
+						.toArray()
+						.then((jobs) => { expect(jobs).to.have.length(2); });
 				});
 			});
 		});

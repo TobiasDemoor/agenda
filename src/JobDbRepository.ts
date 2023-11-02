@@ -106,9 +106,12 @@ export class JobDbRepository {
 
 		// Update / options for the MongoDB query
 		const update: UpdateFilter<IJobParameters> = { $set: { lockedAt: new Date() } };
-		const options: FindOneAndUpdateOptions = {
+		const options: FindOneAndUpdateOptions & {
+			includeResultMetadata: true;
+		} = {
 			returnDocument: 'after',
-			sort: this.connectOptions.sort
+			sort: this.connectOptions.sort,
+			includeResultMetadata: true
 		};
 
 		// Lock the job in MongoDB!
@@ -131,19 +134,19 @@ export class JobDbRepository {
 		 * Query used to find job to run
 		 */
 		const JOB_PROCESS_WHERE_QUERY: Filter<IJobParameters /* Omit<IJobParameters, 'lockedAt'> & { lockedAt?: Date | null } */> =
-			{
-				name: jobName,
-				disabled: { $ne: true },
-				$or: [
-					{
-						lockedAt: { $eq: null as any },
-						nextRunAt: { $lte: nextScanAt }
-					},
-					{
-						lockedAt: { $lte: lockDeadline }
-					}
-				]
-			};
+		{
+			name: jobName,
+			disabled: { $ne: true },
+			$or: [
+				{
+					lockedAt: { $eq: null as any },
+					nextRunAt: { $lte: nextScanAt }
+				},
+				{
+					lockedAt: { $lte: lockDeadline }
+				}
+			]
+		};
 
 		/**
 		 * Query used to set a job as locked
@@ -153,9 +156,12 @@ export class JobDbRepository {
 		/**
 		 * Query used to affect what gets returned
 		 */
-		const JOB_RETURN_QUERY: FindOneAndUpdateOptions = {
+		const JOB_RETURN_QUERY: FindOneAndUpdateOptions & {
+			includeResultMetadata: true;
+		} = {
 			returnDocument: 'after',
-			sort: this.connectOptions.sort
+			sort: this.connectOptions.sort,
+			includeResultMetadata: true
 		};
 
 		// Find ONE and ONLY ONE job and set the 'lockedAt' time so that job begins to be processed
@@ -177,10 +183,9 @@ export class JobDbRepository {
 		this.collection = db.collection(collection);
 		if (log.enabled) {
 			log(
-				`connected with collection: ${collection}, collection size: ${
-					typeof this.collection.estimatedDocumentCount === 'function'
-						? await this.collection.estimatedDocumentCount()
-						: '?'
+				`connected with collection: ${collection}, collection size: ${typeof this.collection.estimatedDocumentCount === 'function'
+					? await this.collection.estimatedDocumentCount()
+					: '?'
 				}`
 			);
 		}
@@ -313,7 +318,10 @@ export class JobDbRepository {
 				const result = await this.collection.findOneAndUpdate(
 					{ _id: id, name: props.name },
 					update,
-					{ returnDocument: 'after' }
+					{
+						returnDocument: 'after',
+						includeResultMetadata: true
+					}
 				);
 				return this.processDbResult(job, result.value as IJobParameters<DATA>);
 			}
@@ -352,14 +360,14 @@ export class JobDbRepository {
 					update,
 					{
 						upsert: true,
-						returnDocument: 'after'
+						returnDocument: 'after',
+						includeResultMetadata: true
 					}
 				);
 				log(
-					`findOneAndUpdate(${props.name}) with type "single" ${
-						result.lastErrorObject?.updatedExisting
-							? 'updated existing entry'
-							: 'inserted new entry'
+					`findOneAndUpdate(${props.name}) with type "single" ${result.lastErrorObject?.updatedExisting
+						? 'updated existing entry'
+						: 'inserted new entry'
 					}`
 				);
 				return this.processDbResult(job, result.value as IJobParameters<DATA>);
@@ -377,7 +385,8 @@ export class JobDbRepository {
 				log('calling findOneAndUpdate() with unique object as query: \n%O', query);
 				const result = await this.collection.findOneAndUpdate(query as IJobParameters, update, {
 					upsert: true,
-					returnDocument: 'after'
+					returnDocument: 'after',
+					includeResultMetadata: true
 				});
 				return this.processDbResult(job, result.value as IJobParameters<DATA>);
 			}
